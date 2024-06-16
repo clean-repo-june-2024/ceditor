@@ -1,35 +1,50 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useRef, useState } from "react";
+import ContentEditable, { ContentEditableEvent } from "react-contenteditable";
 
-function App() {
-  const [count, setCount] = useState(0)
+const codeBlock = (text: string) => {
+  return `<span class="code-block">${text}</span>`;
+};
+
+const App = () => {
+  const [html, setHtml] = useState("");
+  const contentEditableRef = useRef(null);
+
+  const handleChange = (e: ContentEditableEvent) => {
+    const text: string = e.target.value;
+
+    // Replace text surrounded by backticks with the Code component
+    const updatedContent: string = text.replace(
+      /`([^`]+)`/g,
+      (match: string, p1: string) => {
+        return codeBlock(p1);
+      }
+    );
+
+    setHtml(updatedContent);
+
+    // Adjust cursor position to the end of the content
+    const contentEditableElement = contentEditableRef.current;
+    if (contentEditableElement) {
+      const range = document.createRange();
+      console.log("range", range);
+      const selection = window.getSelection();
+      console.log("selection", selection);
+
+      range.selectNodeContents(contentEditableElement);
+      range.collapse(false); // Collapse the range to the end of the content
+
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    }
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <ContentEditable
+      innerRef={contentEditableRef}
+      html={html}
+      onChange={handleChange}
+    />
+  );
+};
 
-export default App
+export default App;
